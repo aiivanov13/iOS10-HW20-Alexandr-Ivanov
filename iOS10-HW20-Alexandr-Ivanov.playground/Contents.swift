@@ -32,17 +32,28 @@ extension NetworkError: LocalizedError {
 
 typealias EndpointCompletion = (Result<Cards, NetworkError>) -> Void
 
+func makeURL(with cardName: String) -> URL? {
+    var urlComponents: URLComponents {
+        var urlComponents = URLComponents()
+        urlComponents.scheme = "https"
+        urlComponents.host = "api.magicthegathering.io"
+        urlComponents.path = "/v1/cards"
+        urlComponents.queryItems = [
+            URLQueryItem(name: "name", value: cardName)
+        ]
+        return urlComponents
+    }
+    return urlComponents.url
+}
+
 func getData(cardName: String, completion: @escaping EndpointCompletion) {
-    let url = "https://api.magicthegathering.io/v1/cards?name=\(cardName)"
-    let urlRequest = URL(string: url)
-    guard let url = urlRequest else { return }
+    guard let url = makeURL(with: cardName) else { return }
 
     URLSession.shared.dataTask(with: url) { data, response, error in
         guard let response = response as? HTTPURLResponse else {
             completion(Result.failure(.networkProblem))
             return
         }
-
         print("Код ответа от сервера: \(response.statusCode)\n")
 
         switch response.statusCode {
@@ -65,10 +76,10 @@ func getData(cardName: String, completion: @escaping EndpointCompletion) {
     }.resume()
 }
 
-let blackLotus = "Black%20Lotus"
+let blackLotus = "Black Lotus"
 let opt = "Opt"
 
-getData(cardName: blackLotus) { result in
+getData(cardName: opt) { result in
     switch result {
     case .success(let data):
         data.cards.forEach {
